@@ -84,7 +84,7 @@ $('#t-out').onclick=()=>showTab('out');$('#t-prev').onclick=()=>showTab('prev');
 const out=$('#out');
 function put(s,c){const sp=document.createElement('span');if(c)sp.className=c;sp.innerHTML=esc(s);out.appendChild(sp);$('#p-out').scrollTop=1e9}
 /* themes */
-const MODES=[['dark','Dark'],['light','Light'],['neon','Neon'],['terminal','Terminal'],['zen','Zen']];
+const MODES=[['dark','Dark'],['light','Light'],['neon','Neon'],['cyberpunk','Cyberpunk'],['zen','Zen']];
 function setMode(m){const i=Math.max(0,MODES.findIndex(x=>x[0]===m));document.documentElement.dataset.mode=MODES[i][0];$('#themeName').textContent=MODES[i][1];
   store.set('ce-mode',MODES[i][0]);document.querySelector('meta[name=theme-color]').content=getComputedStyle(document.body).backgroundColor;dispatchEvent(new Event('modechange'))}
 $('#theme').onclick=()=>{const i=MODES.findIndex(x=>x[0]===document.documentElement.dataset.mode);setMode(MODES[(i+1)%MODES.length][0]);window.drake&&drake.say(`<b>${$('#themeName').textContent}</b> mode on.`)};

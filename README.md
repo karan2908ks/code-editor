@@ -1,7 +1,7 @@
 # Code Editor by Karan Sharma
 
 Browser code editor for C, C++, Java, Python, JavaScript and HTML.
-Drake (the pixel AI bot) spots errors and fixes common mistakes. Five themes: dark, light, neon, terminal, zen (pure black).
+Drake (the pixel AI bot) spots errors and fixes common mistakes. Five themes: dark, light, neon, cyberpunk, zen (pure black with jade, amber and violet accents).
 Snippets are saved to MongoDB.
 
 ## How it runs code
@@ -25,7 +25,7 @@ Without `MONGODB_URI` the app still works. Save falls back to this browser's loc
 - Drake is rule-based, so it needs no API key. To make it a real LLM, add an `api/drake.js` function that calls your model provider and call it from `drake.js`.
 
 ## Features
-- Run C, C++, Java, Python, JavaScript and HTML. Five themes (dark, light, neon, terminal, zen).
+- Run C, C++, Java, Python, JavaScript and HTML. Five themes (dark, light, neon, cyberpunk, zen).
 - **Focus mode** (button or Alt+Z): pauses every animation and hides the hero so you can code in peace. It is remembered.
 - **Share**: saves the code to MongoDB and copies a link like `/?s=<id>`. Anyone with the link can open it (the id is unguessable). Needs `MONGODB_URI`.
 - Autosaved drafts per language (restored on reload), font size A-/A+, download as a file, copy/clear output, run time, status bar.

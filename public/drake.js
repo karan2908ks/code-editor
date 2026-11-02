@@ -201,7 +201,7 @@ function answer(q){
   if(/fix|correct|repair/.test(t)){setTimeout(runFix,50);return 'On it.'}
   if(/check|review|scan/.test(t)){setTimeout(()=>runCheck(),50);return 'Reading your code...'}
   if(/focus|coding mode|distract|quiet|stop animation/.test(t)){setFocus(true);return 'Focus mode is on. All animation is paused.'}
-  if(/theme|mode|neon|dark|light|terminal/.test(t)){const m=/zen|black/.test(t)?'zen':/neon/.test(t)?'neon':/term/.test(t)?'terminal':/light/.test(t)?'light':'dark';setMode(m);return `Switched to ${m} mode.`}
+  if(/theme|mode|neon|dark|light|cyber|punk/.test(t)){const m=/zen|black/.test(t)?'zen':/neon/.test(t)?'neon':/cyber|punk/.test(t)?'cyberpunk':/light/.test(t)?'light':'dark';setMode(m);return `Switched to ${m} mode.`}
   if(/save/.test(t)){setTimeout(openSave,50);return 'Opening save.'}
   for(const k in KB)if(t.includes(k)||(k==='print'&&/output|show|hello world/.test(t))||(k==='loop'&&/iterate|repeat/.test(t))||(k==='input'&&/read|scanf|cin/.test(t)))return `Here is ${k} in ${LANGS[lang].name}:\n<code>${esc(KB[k][lang])}</code>`;
   return 'I can check code, explain errors, fix mistakes, or show a snippet. Try "how to loop", "explain error" or "fix".'}
