@@ -23,3 +23,10 @@ Without `MONGODB_URI` the app still works. Save falls back to this browser's loc
 - Snippets belong to an anonymous id stored in the visitor's browser (no login). Clearing site data loses access to them.
   Add real auth (for example NextAuth or Clerk) before storing anything private.
 - Drake is rule-based, so it needs no API key. To make it a real LLM, add an `api/drake.js` function that calls your model provider and call it from `drake.js`.
+
+## Features
+- Run C, C++, Java, Python, JavaScript and HTML. Five themes (dark, light, neon, terminal, zen).
+- **Focus mode** (button or Alt+Z): pauses every animation and hides the hero so you can code in peace. It is remembered.
+- **Share**: saves the code to MongoDB and copies a link like `/?s=<id>`. Anyone with the link can open it (the id is unguessable). Needs `MONGODB_URI`.
+- Autosaved drafts per language (restored on reload), font size A-/A+, download as a file, copy/clear output, run time, status bar.
+- Drake: spots and fixes common mistakes, explains errors, and answers short questions.

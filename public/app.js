@@ -73,8 +73,8 @@ function clearMarks(){for(let i=0;i<cm.lineCount();i++)cm.removeLineClass(i,'bac
 function markLines(ls){clearMarks();ls.forEach(n=>{if(n>=1&&n<=cm.lineCount())cm.addLineClass(n-1,'background','errline')})}
 cm.on('change',()=>{if(cur.id||cur.title)setStatus('UNSAVED CHANGES')});
 function setLang(l,keep){
-  if(!keep)docs[lang]=cm.getValue();lang=l;$('#lang').value=l;cm.setOption('mode',LANGS[l].mode);
-  if(!keep)cm.setValue(docs[l]!==undefined?docs[l]:SAMPLES[l]);$('#fname').textContent=LANGS[l].file;clearMarks();
+  if(!keep)docs[lang]=cm.getValue();lang=l;store.set('ce-lang',l);$('#lang').value=l;cm.setOption('mode',LANGS[l].mode);
+  if(!keep)cm.setValue(docs[l]!==undefined?docs[l]:(store.get('ce-draft-'+l)||SAMPLES[l]));$('#fname').textContent=LANGS[l].file;clearMarks();
   $('#t-prev').hidden=l!=='html';showTab('out');if(l==='html')runCode(true);
 }
 $('#lang').onchange=e=>{cur={id:null,title:''};setStatus('UNSAVED');setLang(e.target.value);window.drake&&drake.say(`Switched to <b>${LANGS[lang].name}</b>.`)};
@@ -101,7 +101,7 @@ function runJS(code,isHtml){
   if(isHtml){const pre=BRIDGE.replace('OFF','-1');$('#prev').srcdoc=/<head[^>]*>/i.test(code)?code.replace(/<head[^>]*>/i,m=>m+pre):pre+code;showTab('prev');put('HTML rendered in the Preview tab.\n','i');return Promise.resolve()}
   const f=document.createElement('iframe');f.sandbox='allow-scripts';f.style.display='none';
   f.srcdoc='<!doctype html><body>'+BRIDGE.replace('OFF','4')+'<script>\n'+code.replace(/<\/script>/gi,'<\\/script>')+'\n<\/script>';document.body.appendChild(f);
-  return new Promise(r=>{clearTimeout(jsTimer);jsTimer=setTimeout(()=>{f.remove();r()},4000)});
+  return new Promise(r=>{clearTimeout(jsTimer);f.onload=()=>setTimeout(r,200);jsTimer=setTimeout(()=>f.remove(),5000)});
 }
 async function runPy(code){
   const lines=($('#stdin').value||'').split('\n');let li=0;
@@ -124,7 +124,7 @@ function errLines(t){const s=new Set();let m;const r1=/[\w.]+\.(?:c|cpp|java|py)
 let running=false;
 async function runCode(silent){
   if(running)return;running=true;const b=$('#run');b.disabled=true;State.lastErr='';$('#exit').textContent='';
-  const code=cm.getValue();out.innerHTML='';clearMarks();showTab(lang==='html'?'prev':'out');window.drake&&drake.setMood('think');
+  const T0=performance.now();const code=cm.getValue();out.innerHTML='';clearMarks();showTab(lang==='html'?'prev':'out');window.drake&&drake.setMood('think');
   try{
     if(lang==='js')await runJS(code,false);else if(lang==='html')await runJS(code,true);else if(lang==='python')await runPy(code);else await runRemote(lang,code);
     if(!State.lastErr&&!silent&&window.drake){drake.react('ok');burst($('#run'))}
@@ -136,6 +136,7 @@ async function runCode(silent){
       window.drake&&drake.say('I cannot reach the compiler service, so I will read your code instead.');window.drake&&drake.check(true);
     }else{State.lastErr=text;markLines(errLines(text));window.drake&&drake.react('bad',text)}
   }
+  if(lang==='python'||lang==='c'||lang==='cpp'||lang==='java'){const ms=Math.round(performance.now()-T0);$('#exit').textContent=($('#exit').textContent?$('#exit').textContent+' \u00b7 ':'')+(ms>999?(ms/1000).toFixed(1)+'s':ms+'ms')}
   running=false;b.disabled=false;
 }
 $('#run').onclick=()=>runCode();
@@ -175,7 +176,8 @@ $('#mine').onclick=openMine;$('#mineClose').onclick=()=>$('#mineDlg').hidden=tru
 document.querySelectorAll('.veil').forEach(v=>v.addEventListener('mousedown',e=>{if(e.target===v)v.hidden=true}));
 addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.veil').forEach(v=>v.hidden=true)});
 /* boot */
-cm.setOption('mode',LANGS.python.mode);cm.setValue(SAMPLES.python);setMode(store.get('ce-mode')||'dark');
+lang=LANGS[store.get('ce-lang')]?store.get('ce-lang'):'python';$('#lang').value=lang;cm.setOption('mode',LANGS[lang].mode);
+cm.setValue(store.get('ce-draft-'+lang)||SAMPLES[lang]);$('#fname').textContent=LANGS[lang].file;$('#t-prev').hidden=lang!=='html';setMode(store.get('ce-mode')||'dark');
 
 /* ---------- motion helpers ---------- */
 document.querySelectorAll('[data-split]').forEach(el=>{const t=el.textContent;el.textContent='';el.setAttribute('aria-label',t);
@@ -183,8 +185,42 @@ document.querySelectorAll('[data-split]').forEach(el=>{const t=el.textContent;el
 const trk=$('#track');if(trk)trk.innerHTML+=trk.innerHTML;
 (function typer(){const words=['WRITE C, C++ AND JAVA','RUN PYTHON IN YOUR BROWSER','PREVIEW HTML LIVE','LET DRAKE FIX YOUR BUGS','SAVE TO MONGODB'];const el=$('#typed');let w=0,i=0,del=false;
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){el.textContent=words[0];return}
-  (function tick(){const s=words[w];i+=del?-1:1;el.textContent=s.slice(0,i);let d=del?28:70;
+  (function tick(){if(document.documentElement.dataset.focus==='1'){setTimeout(tick,600);return}const s=words[w];i+=del?-1:1;el.textContent=s.slice(0,i);let d=del?28:70;
     if(!del&&i===s.length){del=true;d=1400}else if(del&&i===0){del=false;w=(w+1)%words.length;d=300}setTimeout(tick,d)})()})();
-function burst(el){if(matchMedia('(prefers-reduced-motion: reduce)').matches||!el.animate)return;const r=el.getBoundingClientRect(),cs=['#ee6a7c','#f7d154','#6fdcff','#5cf2a0'];
+function burst(el){if(document.documentElement.dataset.focus==='1'||matchMedia('(prefers-reduced-motion: reduce)').matches||!el.animate)return;const r=el.getBoundingClientRect(),cs=['#ee6a7c','#f7d154','#6fdcff','#5cf2a0'];
   for(let i=0;i<18;i++){const p=document.createElement('i');p.className='spark';p.style.cssText=`left:${r.left+r.width/2}px;top:${r.top+r.height/2}px;background:${cs[i%4]}`;document.body.appendChild(p);
     const a=Math.random()*6.283,d=40+Math.random()*70;p.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d+30}px) scale(.2)`,opacity:0}],{duration:700+Math.random()*300,easing:'cubic-bezier(.2,.8,.3,1)'}).onfinish=()=>p.remove()}}
+
+/* ---------- v3 features ---------- */
+const focusOn=()=>document.documentElement.dataset.focus==='1';
+function setFocus(on,quiet){document.documentElement.dataset.focus=on?'1':'0';const b=$('#focus');b.setAttribute('aria-pressed',on);b.textContent=on?'Focus: On':'Focus';store.set('ce-focus',on?'1':'0');
+  dispatchEvent(new Event('focuschange'));setTimeout(()=>cm.refresh(),30);if(!quiet)toast(on?'Focus mode on. Animations paused.':'Focus mode off.')}
+$('#focus').onclick=()=>setFocus(!focusOn());
+addEventListener('keydown',e=>{if(((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='f')||(e.altKey&&e.code==='KeyZ')){e.preventDefault();setFocus(!focusOn())}});
+if(store.get('ce-focus')==='1')setFocus(true,true);
+/* font size */
+let fsz=+store.get('ce-fs')||13.5;function applyFs(){cm.getWrapperElement().style.fontSize=fsz+'px';cm.refresh();store.set('ce-fs',fsz)}
+$('#fminus').onclick=()=>{fsz=Math.max(10,fsz-1);applyFs()};$('#fplus').onclick=()=>{fsz=Math.min(26,fsz+1);applyFs()};applyFs();
+/* download / reset / copy */
+$('#dl').onclick=()=>{try{const b=new Blob([cm.getValue()],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=LANGS[lang].file;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);toast('Downloaded '+LANGS[lang].file)}catch(e){toast('Download is blocked in this view')}};
+$('#rs').onclick=()=>{cm.setValue(SAMPLES[lang]);clearMarks();toast('Sample restored')};
+$('#copyOut').onclick=async()=>{try{await navigator.clipboard.writeText(out.textContent);toast('Output copied')}catch(e){toast('Could not copy. Select the text instead.')}};
+/* autosave draft */
+let draftT;cm.on('change',()=>{clearTimeout(draftT);draftT=setTimeout(()=>store.set('ce-draft-'+lang,cm.getValue()),400)});
+/* share link (needs MongoDB) */
+$('#share').onclick=async()=>{
+  try{
+    const t=cur.title||('Shared '+LANGS[lang].name);const dbId=cur.id&&!String(cur.id).startsWith('L')?cur.id:null;
+    const j=await api('POST','',{id:dbId,title:t,lang,code:cm.getValue()});cur={id:j.id,title:t};setStatus('SAVED TO MONGODB \u00b7 '+t.toUpperCase(),true);
+    const url=location.origin+location.pathname+'?s='+j.id;
+    try{await navigator.clipboard.writeText(url);toast('Share link copied')}catch(e){toast(url)}
+  }catch(e){toast('Sharing needs the database. Set MONGODB_URI on Vercel.')}
+};
+(function loadShared(){const sid=new URLSearchParams(location.search).get('s');if(!sid)return;
+  fetch('/api/snippets?id='+encodeURIComponent(sid)).then(r=>r.json()).then(j=>{if(!j.item)throw 0;const it=j.item;setLang(it.lang,true);cm.setValue(it.code);cur={id:null,title:''};setStatus('SHARED CODE \u00b7 '+String(it.title).toUpperCase());toast('Loaded shared code: '+it.title);window.drake&&drake.say(`Opened shared code <b>${esc(it.title)}</b>. Saving makes your own copy.`)}).catch(()=>toast('Shared code not found'))})();
+
+/* clear output, status bar, draft indicator */
+$('#clrOut').onclick=()=>{out.innerHTML='<span class="i">Output cleared.</span>';$('#exit').textContent=''};
+function sbar(){const p=cm.getCursor();$('#pos').textContent=`Ln ${p.line+1}, Col ${p.ch+1}`;const v=cm.getValue();$('#cnt').textContent=`${cm.lineCount()} lines \u00b7 ${v.length} chars`}
+cm.on('cursorActivity',sbar);cm.on('change',sbar);sbar();
+cm.on('change',()=>{$('#draft').textContent='';clearTimeout(sbar.t);sbar.t=setTimeout(()=>{$('#draft').textContent='DRAFT SAVED'},700)});

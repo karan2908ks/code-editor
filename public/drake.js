@@ -200,12 +200,13 @@ function answer(q){
   if(/explain|why|error|wrong|bug/.test(t))return State.lastErr?explain(State.lastErr):'Run your code first, or press CHECK, and I will explain what I find.';
   if(/fix|correct|repair/.test(t)){setTimeout(runFix,50);return 'On it.'}
   if(/check|review|scan/.test(t)){setTimeout(()=>runCheck(),50);return 'Reading your code...'}
+  if(/focus|coding mode|distract|quiet|stop animation/.test(t)){setFocus(true);return 'Focus mode is on. All animation is paused.'}
   if(/theme|mode|neon|dark|light|terminal/.test(t)){const m=/zen|black/.test(t)?'zen':/neon/.test(t)?'neon':/term/.test(t)?'terminal':/light/.test(t)?'light':'dark';setMode(m);return `Switched to ${m} mode.`}
   if(/save/.test(t)){setTimeout(openSave,50);return 'Opening save.'}
   for(const k in KB)if(t.includes(k)||(k==='print'&&/output|show|hello world/.test(t))||(k==='loop'&&/iterate|repeat/.test(t))||(k==='input'&&/read|scanf|cin/.test(t)))return `Here is ${k} in ${LANGS[lang].name}:\n<code>${esc(KB[k][lang])}</code>`;
   return 'I can check code, explain errors, fix mistakes, or show a snippet. Try "how to loop", "explain error" or "fix".'}
 $('#askf').onsubmit=e=>{e.preventDefault();const v=$('#askin').value.trim();if(!v)return;$('#askin').value='';drake.me(v);setTimeout(()=>drake.say(answer(v)),250)};
 window.drake=drake;
-setLang('python',true);draw();
+setLang(lang,true);draw();
 drake.say('Hi, I am <b>Drake</b>. I spot errors in your code and fix them. Try breaking the sample, then press <b>CHECK</b>.');
 setTimeout(()=>{if(panel.hidden)showTip('Hi, I am Drake. Click me to check or fix your code.',6000)},1200);

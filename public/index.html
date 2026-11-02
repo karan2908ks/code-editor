@@ -26,6 +26,7 @@
     <button class="btn alt" id="save">Save</button>
     <button class="btn alt" id="mine">My codes</button>
     <button class="btn pri" id="run">&#9654; Run</button>
+    <button class="btn alt" id="focus" aria-pressed="false" title="Coding mode: pauses every animation (Alt+Z)">Focus</button>
     <button class="btn theme" id="theme" aria-label="Change theme"><i><s style="background:#ee6a7c"></s><s style="background:#f7d154"></s><s style="background:#6fdcff"></s><s style="background:#5cf2a0"></s></i><span id="themeName">Dark</span></button>
   </div>
 </div></header>
@@ -35,14 +36,15 @@
     <h1 class="big" id="big" data-split data-t="CODE EDITOR">CODE EDITOR</h1>
     <p class="type"><span id="typed"></span><i class="caret"></i></p>
   </section>
-  <div class="crumb"><p class="lbl">// <em>PLAYER 1</em> READY<i class="caret"></i></p><span id="status">UNSAVED</span></div>
+  <div class="crumb"><p class="lbl">// <em>PLAYER 1</em> READY<i class="caret"></i></p><span class="keys">CTRL+ENTER RUN &middot; CTRL+S SAVE &middot; ALT+Z FOCUS</span><span id="status">UNSAVED</span></div>
   <div class="workspace">
     <section class="box" aria-label="Editor">
-      <h2>// EDITOR <span id="fname">main.py</span></h2>
+      <h2>// EDITOR <span id="fname">main.py</span><div class="mrow"><button class="mini" id="fminus" title="Smaller text">A-</button><button class="mini" id="fplus" title="Bigger text">A+</button><button class="mini" id="share" title="Copy a link to this code">SHARE</button><button class="mini" id="dl" title="Download as a file">DOWNLOAD</button><button class="mini" id="rs" title="Reset to sample">RESET</button></div></h2>
       <div class="ed"><textarea id="code"></textarea></div>
+      <div class="sbar"><span id="pos">Ln 1, Col 1</span><span id="cnt"></span><span id="draft" class="push"></span></div>
     </section>
     <section class="box" aria-label="Output">
-      <h2>// OUTPUT <span id="exit"></span></h2>
+      <h2>// OUTPUT <span id="exit"></span><div class="mrow"><button class="mini" id="copyOut">COPY</button><button class="mini" id="clrOut">CLEAR</button></div></h2>
       <div class="tabs" role="tablist">
         <button role="tab" id="t-out" aria-selected="true">Console</button>
         <button role="tab" id="t-prev" aria-selected="false" hidden>Preview</button>
@@ -54,15 +56,14 @@
   </div>
 </div>
 
-<div class="ticker" aria-hidden="true"><div class="track" id="track"><span>C</span><s></s><span>C++</span><s></s><span>JAVA</span><s></s><span>PYTHON</span><s></s><span>JAVASCRIPT</span><s></s><span>HTML</span><s></s><span>DRAKE AI</span><s></s><span>SAVE TO MONGODB</span><s></s><span>4 THEMES</span><s></s></div></div>
 <footer id="footer">
   <canvas id="fcv"></canvas>
   <div class="fcontent">
     <p class="hint">MOVE YOUR CURSOR. CLICK AND DRAG TO DRAW.</p>
     <h2>Designed and developed by <em>Karan Sharma</em></h2>
-    <div class="flinks"><a href="https://karanportfolio-ashen.vercel.app/" target="_blank" rel="noopener">PORTFOLIO</a></div>
+    <div class="flinks"><a href="https://github.com/karan2908ks" target="_blank" rel="noopener">GITHUB</a><a href="https://karanportfolio-ashen.vercel.app/" target="_blank" rel="noopener">PORTFOLIO</a></div>
     <div class="mobs">MOBS SLAIN: <span id="slain">0</span></div>
-    <div class="copy">&copy; 2026 KARAN SHARMA &middot; AI BOT: DRAKE &middot; CLICK THE MOBS</div>
+    <div class="copy">&copy; 2026 KARAN SHARMA &middot; CODE EDITOR &middot; AI BOT: DRAKE</div>
   </div>
 </footer>
 
