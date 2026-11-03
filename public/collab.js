@@ -1,4 +1,4 @@
-/* Multiplayer coding for Code Editor.
+/* Multiplayer coding for Arcode.
    Peer to peer over WebRTC (PeerJS public broker). Star topology: the host is the authority and relays.
    Sync: operational transformation (ot.js style retain/insert/delete ops, one server revision log per file on the host,
    a three-state client on guests), so simultaneous typing converges. Presence: colored remote carets and selections.

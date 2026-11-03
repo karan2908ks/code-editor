@@ -317,7 +317,7 @@ function navigate(t){
 }
 function answer(q){
   const t=q.toLowerCase().trim();
-  if(/^(hi|hello|hey|yo)\b|who are you|your name/.test(t))return `I am <b>Drake</b>, the AI bot inside Karan's Code Editor. I can <b>explain</b>, <b>debug</b>, <b>optimize</b> and <b>fix</b> your code, and take you to any part of the page.`;
+  if(/^(hi|hello|hey|yo)\b|who are you|your name/.test(t))return `I am <b>Drake</b>, the AI bot inside Karan's Arcode. I can <b>explain</b>, <b>debug</b>, <b>optimize</b> and <b>fix</b> your code, and take you to any part of the page.`;
   const nav=navigate(t);if(nav)return nav;
   if(/^explain\b/.test(t)&&!/error/.test(t)){setTimeout(()=>$('#explain').click(),50);return'On it.'}
   if(/debug/.test(t)){setTimeout(()=>$('#debug').click(),50);return'Debugging...'}

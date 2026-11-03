@@ -1,4 +1,4 @@
-# Code Editor by Karan Sharma
+# Arcode by Karan Sharma
 
 A multi-file browser code editor for C, C++, Java, Python, JavaScript, HTML and CSS, with a pixel-art look that matches [my portfolio](https://karanportfolio-ashen.vercel.app/), an AI bot called **Drake**, and a playable game in the footer.
 

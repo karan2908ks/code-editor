@@ -1,4 +1,4 @@
-/* Algorithm Visualizer for Code Editor. Self-contained IIFE: injects its own CSS + modal.
+/* Algorithm Visualizer for Arcode. Self-contained IIFE: injects its own CSS + modal.
    Needs from app.js: Files.add, Tools.add (and optionally toast). Public API: window.Viz. */
 (function () {
 'use strict';

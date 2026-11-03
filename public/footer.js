@@ -140,7 +140,7 @@ let robot=null,secret='',best=+gstore.get('ce-best')||0,total=+gstore.get('ce-co
 const LEVELS=[
  {name:'ABOUT',card:'B.TECH STUDENT. BUILDER. LEARNING',plats:[[.2,50,110],[.43,80,110],[.66,58,110]],coins:[[.2,50],[.43,80],[.66,58],[.31,0],[.54,0],[.8,0]],mobs:[['skeleton',.56]]},
  {name:'SKILLS',card:'C . C++ . JAVA . PYTHON . JS . HTML',plats:[[.13,46,90],[.3,78,90],[.48,52,90],[.65,80,90],[.82,56,90]],coins:[[.13,46],[.3,78],[.48,52],[.65,80],[.82,56],[.22,0],[.57,0],[.9,0]],mobs:[['creeper',.4],['skeleton',.74]]},
- {name:'WORK',card:'CODE EDITOR . PORTFOLIO . ARCADE',plats:[[.16,40,90],[.32,70,90],[.5,100,100],[.68,70,90],[.84,40,90]],coins:[[.16,40],[.32,70],[.5,100],[.68,70],[.84,40],[.25,0],[.6,0],[.92,0]],mobs:[['skeleton',.3],['creeper',.55],['skeleton',.78]]}
+ {name:'WORK',card:'ARCODE . PORTFOLIO . ARCADE',plats:[[.16,40,90],[.32,70,90],[.5,100,100],[.68,70,90],[.84,40,90]],coins:[[.16,40],[.32,70],[.5,100],[.68,70],[.84,40],[.25,0],[.6,0],[.92,0]],mobs:[['skeleton',.3],['creeper',.55],['skeleton',.78]]}
 ];
 /* tiny sound effects (Web Audio, starts after the first click) */
 let AC=null,sfxOn=gstore.get('ce-sfx')!=='0';

@@ -1,4 +1,4 @@
-/* Code Editor by Karan Sharma. Tokens follow the portfolio: navy ground, cream ink, coral / yellow / cyan accents. */
+/* Arcode by Karan Sharma. Tokens follow the portfolio: navy ground, cream ink, coral / yellow / cyan accents. */
 :root{
   --bg:#15122b;--panel:#1c1840;--panel2:#241f52;--line:#3a3380;--fg:#f3efe6;--muted:#9d99cc;
   --c1:#ee6a7c;--c2:#f7d154;--c3:#6fdcff;--ok:#5cf2a0;--bad:#ff6b8a;--warn:#f7d154;--on-c1:#15122b;
@@ -186,7 +186,7 @@ html,body{overflow-x:clip}.hero{max-width:100%}.big{max-width:100%;overflow-wrap
 
 /* bolder wordmark */
 .wm,.big{-webkit-text-stroke:.07em currentColor;paint-order:stroke fill;font-weight:700}
-.logo b.wm{-webkit-text-stroke:.06em currentColor;font-size:16px}
+.logo b.wm{-webkit-text-stroke:.06em currentColor;font-size:20px}
 /* ---------- zen: pure black, calm ---------- */
 :root[data-mode="zen"]{--bg:#000;--panel:#000;--panel2:#0a0a0c;--line:#26262b;--fg:#ededed;--muted:#7f7f8a;--c1:#7ee0c0;--c2:#f2c46d;--c3:#9d8cff;--ok:#7ee0c0;--bad:#ff7a8a;--warn:#f2c46d;--on-c1:#000;--shadow:#26262b;--glow:none;--grid:transparent;color-scheme:dark}
 :root[data-mode="zen"] body{background-image:none}
@@ -273,7 +273,7 @@ footer{min-height:560px;margin-top:40px;border-top:3px solid var(--line)}
 
 /* ====================== v4: IDE layout ====================== */
 .hero{flex-direction:row!important;align-items:center!important;justify-content:space-between;flex-wrap:wrap;gap:10px 20px!important;padding-block:12px 4px!important}
-.big{font-size:clamp(16px,2.5vw,30px)!important;text-shadow:2px 2px 0 var(--line)!important;letter-spacing:.02em}
+.big{font-size:clamp(20px,3.4vw,44px)!important;text-shadow:2px 2px 0 var(--line)!important;letter-spacing:.02em}
 :root[data-mode="cyberpunk"] .big{text-shadow:2px 2px 0 var(--c2),-1px -1px 0 var(--c3)!important}
 .chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .chips span{font:400 10px var(--px);color:var(--muted);letter-spacing:.14em}

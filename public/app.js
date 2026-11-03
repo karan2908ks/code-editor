@@ -1,4 +1,4 @@
-/* Code Editor by Karan Sharma. Core: multi-file projects, tabs, themes, layout helpers. */
+/* Arcode by Karan Sharma. Core: multi-file projects, tabs, themes, layout helpers. */
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
@@ -91,7 +91,7 @@ SAMPLES.html=`<!DOCTYPE html>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1 id="t">Hello from Code Editor</h1>
+  <h1 id="t">Hello from Arcode</h1>
   <button id="b">Click me</button>
   <script>
     let n = 0;

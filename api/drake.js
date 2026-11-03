@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
       body: JSON.stringify({
         model: process.env.DRAKE_MODEL || 'claude-sonnet-5-5',
         max_tokens: 900,
-        system: 'You are Drake, a friendly pixel-robot coding assistant inside Karan Sharma\'s Code Editor. Be concise (under 200 words), use short paragraphs and small code blocks, and never invent APIs.',
+        system: 'You are Drake, a friendly pixel-robot coding assistant inside Karan Sharma\'s Arcode. Be concise (under 200 words), use short paragraphs and small code blocks, and never invent APIs.',
         messages: [{ role: 'user', content: user }],
       }),
     });

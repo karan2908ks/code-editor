@@ -1,4 +1,4 @@
-/* GitHub integration for Code Editor. Browser-only: talks to api.github.com with the user's own token.
+/* GitHub integration for Arcode. Browser-only: talks to api.github.com with the user's own token.
    Needs (from app.js): toast, Files {add,current,all}, Tools {add}. Public API: window.GitHubModule {open, close, isConnected, disconnect}. */
 (function(){
 'use strict';
@@ -129,7 +129,7 @@ root.innerHTML=`<div class="gh-modal" role="dialog" aria-label="GitHub">
       <label id="ghPathL">Path in repo<input id="ghPath" placeholder="main.py" autocomplete="off" spellcheck="false"></label>
       <label id="ghDirL" hidden>Folder (optional)<input id="ghDir" placeholder="src" autocomplete="off" spellcheck="false"></label>
     </div>
-    <label style="margin-top:10px">Commit message<input id="ghMsg" placeholder="Update from Code Editor" autocomplete="off"></label>
+    <label style="margin-top:10px">Commit message<input id="ghMsg" placeholder="Update from Arcode" autocomplete="off"></label>
     <div style="margin-top:10px"><button class="btn pri" data-a="push">Commit &amp; push</button></div>
     <div class="gh-msg" id="ghPushOut" style="margin-top:8px"></div>
   </div>
@@ -149,7 +149,7 @@ root.innerHTML=`<div class="gh-modal" role="dialog" aria-label="GitHub">
       <label class="chk"><input type="radio" name="ghGScope" value="cur" checked> Current file</label>
       <label class="chk"><input type="radio" name="ghGScope" value="all"> All open files</label>
     </div>
-    <label style="margin-top:10px">Description<input id="ghGDesc" placeholder="Shared from Code Editor" autocomplete="off"></label>
+    <label style="margin-top:10px">Description<input id="ghGDesc" placeholder="Shared from Arcode" autocomplete="off"></label>
     <div class="gh-grp" style="margin-top:10px">
       <label class="chk"><input type="radio" name="ghVis" value="secret" checked> Secret (anyone with the link)</label>
       <label class="chk"><input type="radio" name="ghVis" value="public"> Public</label>
@@ -261,7 +261,7 @@ async function push(btn){
   const info=await ensureRepo();if(!info)return;
   const branch=val('ghBranch')||info.default_branch,files=scopeFiles('ghScope'),all=QA('input[name=ghScope]:checked')[0].value==='all';
   if(!files.length||!files[0]){say(out,'There is no file to push.','bad');return}
-  const dir=val('ghDir').replace(/^\/+|\/+$/g,''),msg=val('ghMsg')||(all?'Update files from Code Editor':'Update '+files[0].name+' from Code Editor');
+  const dir=val('ghDir').replace(/^\/+|\/+$/g,''),msg=val('ghMsg')||(all?'Update files from Arcode':'Update '+files[0].name+' from Arcode');
   const targets=files.map(f=>({f,path:all?(dir?dir+'/':'')+f.name:val('ghPath').replace(/^\/+/,'')}));
   for(const t of targets){if(!t.path||/(^|\/)\.\.(\/|$)/.test(t.path)){say(out,'Enter a valid path inside the repo.','bad');return}}
   busy(btn,true,'Pushing...');const lines=[];let fail=false;
@@ -300,7 +300,7 @@ async function makeGist(btn){
   const out=Q('#ghGistOut');
   if(!token){say(out,'Connect a token first. Gists need the Gists permission.','bad');return}
   const files=scopeFiles('ghGScope');if(!files.length||!files[0]){say(out,'There is no file to share.','bad');return}
-  const body={description:val('ghGDesc')||'Shared from Code Editor',public:QA('input[name=ghVis]:checked')[0].value==='public',files:{}};
+  const body={description:val('ghGDesc')||'Shared from Arcode',public:QA('input[name=ghVis]:checked')[0].value==='public',files:{}};
   for(const f of files){if(!String(f.code).trim()){say(out,X(f.name)+' is empty. Gists cannot contain empty files.','bad');return}body.files[f.name]={content:f.code}}
   busy(btn,true,'Creating...');
   try{const g=await gh('/gists',{method:'POST',body});say(out,`Created ${g.public?'public':'secret'} gist: <a href="${X(g.html_url)}" target="_blank" rel="noopener">${X(g.html_url)}</a>`,'ok');tell('Gist created')}
