@@ -1,8 +1,8 @@
 {
   "name": "code-editor",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Code Editor by Karan Sharma: run C, C++, Java, Python, JavaScript and HTML with Drake, an AI bot that fixes your code.",
+  "description": "Code Editor by Karan Sharma: multi-file editor for C, C++, Java, Python, JavaScript, HTML and CSS with Drake, an AI bot.",
   "engines": { "node": ">=18" },
-  "dependencies": { "mongodb": "^6.10.0" }
+  "dependencies": { "diff-match-patch": "^1.0.5", "mongodb": "^6.10.0" }
 }

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#15122b">
 <title>Code Editor | Karan Sharma</title>
-<meta name="description" content="Write, run and fix C, C++, Java, Python, JavaScript and HTML in the browser. Drake, the built-in AI bot, spots your errors and corrects them.">
+<meta name="description" content="Multi-file online code editor for C, C++, Java, Python, JavaScript, HTML and CSS. Drake, the built-in AI bot, explains, debugs and fixes your code.">
 <link rel="icon" type="image/svg+xml" href="code-editor-logo.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Archivo:wght@800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700;800&family=Silkscreen:wght@400;700&display=swap">
@@ -19,50 +19,77 @@
     <span><b class="wm" data-split>Code Editor</b><small>BY KARAN SHARMA</small></span>
   </a>
   <div class="bar">
-    <select id="lang" aria-label="Language">
+    <select id="lang" aria-label="Language of this file">
       <option value="c">C</option><option value="cpp">C++</option><option value="java">Java</option>
-      <option value="python" selected>Python</option><option value="js">JavaScript</option><option value="html">HTML</option>
+      <option value="python">Python</option><option value="js">JavaScript</option><option value="html">HTML</option><option value="css">CSS</option>
     </select>
-    <button class="btn alt" id="save">Save</button>
-    <button class="btn alt" id="mine">My codes</button>
-    <button class="btn pri" id="run">&#9654; Run</button>
-    <button class="btn alt" id="focus" aria-pressed="false" title="Coding mode: pauses every animation (Alt+Z)">Focus</button>
-    <button class="btn theme" id="theme" aria-label="Change theme"><i><s style="background:#ee6a7c"></s><s style="background:#f7d154"></s><s style="background:#6fdcff"></s><s style="background:#5cf2a0"></s></i><span id="themeName">Dark</span></button>
+    <button class="btn pri" id="run" title="Run (Ctrl+Enter)">&#9654; Run</button>
+    <button class="btn theme" id="theme" aria-haspopup="true" aria-label="Choose theme"><i id="themeDots"></i><span id="themeName">Dark</span></button>
   </div>
 </div></header>
 
 <div class="wrap">
   <section class="hero">
     <h1 class="big" id="big" data-split data-t="CODE EDITOR">CODE EDITOR</h1>
-    <p class="type"><span id="typed"></span><i class="caret"></i></p>
+    <div class="chips" id="chips" aria-label="Open examples for a language">
+      <span>TRY</span><button data-l="python">Python</button><button data-l="js">JavaScript</button><button data-l="html">HTML</button><button data-l="java">Java</button><button data-l="c">C</button><button data-l="cpp">C++</button>
+    </div>
   </section>
-  <div class="crumb"><p class="lbl">// <em>PLAYER 1</em> READY<i class="caret"></i></p><span class="keys">CTRL+ENTER RUN &middot; CTRL+S SAVE &middot; ALT+Z FOCUS</span><span id="status">UNSAVED</span></div>
-  <div class="workspace">
-    <section class="box" aria-label="Editor">
-      <h2>// EDITOR <span id="fname">main.py</span><div class="mrow"><button class="mini" id="fminus" title="Smaller text">A-</button><button class="mini" id="fplus" title="Bigger text">A+</button><button class="mini" id="share" title="Copy a link to this code">SHARE</button><button class="mini" id="dl" title="Download as a file">DOWNLOAD</button><button class="mini" id="rs" title="Reset to sample">RESET</button></div></h2>
+
+  <nav class="menubar" aria-label="Tools">
+    <button class="btn sm" id="exBtn">Examples</button>
+    <button class="btn sm" id="save">Save</button>
+    <button class="btn sm" id="mine">My codes</button>
+    <button class="btn sm" id="share" title="Copy a link to this project">Share</button>
+    <span class="sep"></span>
+    <button class="btn sm" id="viz">Visualizer</button>
+    <button class="btn sm" id="gh">GitHub</button>
+    <button class="btn sm" id="live">Live code</button>
+    <span class="sep"></span>
+    <button class="btn sm" id="focus" aria-pressed="false" title="Coding mode: pauses every animation (Alt+Z)">Focus</button>
+    <button class="btn sm" id="full" title="Full screen editor (F11 or Ctrl+Shift+M)">Full screen</button>
+  </nav>
+
+  <div class="workspace" id="workspace">
+    <section class="box" id="edBox" aria-label="Editor">
+      <h2>// EDITOR<span class="mrow"><button class="mini" id="fminus" title="Smaller text">A-</button><button class="mini" id="fplus" title="Bigger text">A+</button><button class="mini" id="dl" title="Download this file">DOWNLOAD</button><button class="mini" id="rs" title="Reset this file to a sample">RESET</button><button class="mini" id="fsx" title="Exit full screen" hidden>EXIT FULL</button></span></h2>
+      <div class="ftabs" id="ftabs" role="tablist" aria-label="Files"></div>
       <div class="ed"><textarea id="code"></textarea></div>
-      <div class="sbar"><span id="pos">Ln 1, Col 1</span><span id="cnt"></span><span id="draft" class="push"></span></div>
+      <div class="sbar"><span id="pos">Ln 1, Col 1</span><span id="cnt"></span><span id="peers"></span><span id="draft" class="push"></span><span id="status">UNSAVED</span></div>
     </section>
-    <section class="box" aria-label="Output">
-      <h2>// OUTPUT <span id="exit"></span><div class="mrow"><button class="mini" id="copyOut">COPY</button><button class="mini" id="clrOut">CLEAR</button></div></h2>
+
+    <div class="vsplit" id="vsplit" role="separator" aria-orientation="vertical" aria-label="Resize panels" tabindex="0"></div>
+
+    <section class="box" id="outBox" aria-label="Output">
+      <h2>// OUTPUT<span class="meter" id="meter"><b id="mExit">EXIT -</b><b id="mTime">TIME -</b><b id="mMem">MEM -</b></span><span class="mrow"><button class="mini" id="copyOut">COPY</button><button class="mini" id="clrOut">CLEAR</button></span></h2>
       <div class="tabs" role="tablist">
-        <button role="tab" id="t-out" aria-selected="true">Console</button>
+        <button role="tab" id="t-out" aria-selected="true">Output</button>
+        <button role="tab" id="t-term" aria-selected="false">Terminal</button>
+        <button role="tab" id="t-prob" aria-selected="false">Problems<em class="cnt" id="probCnt" hidden>0</em></button>
         <button role="tab" id="t-prev" aria-selected="false" hidden>Preview</button>
       </div>
       <div class="pane" id="p-out"><pre id="out"><span class="i">Press Run (or Ctrl+Enter) to see output here.</span></pre></div>
+      <div class="pane term" id="p-term" hidden>
+        <pre id="termlog"><span class="i">$ ready. Each run is logged here.</span></pre>
+        <textarea id="stdin" placeholder="stdin: type input here for scanf / cin / input() / Scanner (one value per line)"></textarea>
+      </div>
+      <div class="pane" id="p-prob" hidden><div id="problems"></div></div>
       <div class="pane" id="p-prev" hidden><iframe id="prev" sandbox="allow-scripts" title="HTML preview"></iframe></div>
-      <textarea id="stdin" placeholder="stdin: input for scanf / cin / input() / Scanner"></textarea>
     </section>
   </div>
 </div>
 
 <footer id="footer">
-  <canvas id="fcv"></canvas>
+  <canvas id="fcv" tabindex="0" aria-label="Pixel game. Click, then use A and D or arrow keys to move, W or space to jump."></canvas>
   <div class="fcontent">
-    <p class="hint">MOVE YOUR CURSOR. CLICK AND DRAG TO DRAW.</p>
+    <p class="hint" id="hint">CLICK THE SCENE &middot; A/D OR ARROWS TO MOVE &middot; W OR SPACE TO JUMP &middot; DRAG TO DRAW</p>
     <h2>Designed and developed by <em>Karan Sharma</em></h2>
-    <div class="flinks"><a href="https://github.com/karan2908ks" target="_blank" rel="noopener">GITHUB</a><a href="https://karanportfolio-ashen.vercel.app/" target="_blank" rel="noopener">PORTFOLIO</a></div>
-    <div class="mobs">MOBS SLAIN: <span id="slain">0</span></div>
+    <div class="flinks">
+      <a id="ghLink" href="https://github.com/karan2908ks" target="_blank" rel="noopener" class="locked" aria-label="GitHub (locked: collect 5 coins to unlock)">GITHUB &middot; COLLECT 5 COINS</a>
+      <a href="https://karanportfolio-ashen.vercel.app/" target="_blank" rel="noopener">PORTFOLIO</a>
+    </div>
+    <div class="mobs hud" id="hud">COINS <b id="coins">0</b> &middot; BEST <b id="best">0</b> &middot; LEVEL <b id="lvl">1</b> &middot; MOBS SLAIN <span id="slain">0</span></div>
+    <div class="pad" aria-hidden="true"><button id="padL">&#9664;</button><button id="padJ">&#9650;</button><button id="padR">&#9654;</button></div>
     <div class="copy">&copy; 2026 KARAN SHARMA &middot; CODE EDITOR &middot; AI BOT: DRAKE</div>
   </div>
 </footer>
@@ -71,21 +98,20 @@
 <div class="tip" id="tip" hidden></div>
 <button class="fab" id="fab" aria-label="Open Drake, the AI bot"><canvas id="dcv" width="16" height="16"></canvas><span class="badge" id="badge" hidden>0</span></button>
 <section class="dpanel" id="dpanel" hidden aria-label="Drake AI bot">
-  <h3>// DRAKE AI <button id="dclose" aria-label="Close">&times;</button></h3>
+  <h3>// DRAKE AI <span id="aiMode" class="aimode">RULES</span><span id="dmood" class="aimode">IDLE</span><button id="dclose" aria-label="Close">&times;</button></h3>
   <div id="log" aria-live="polite"></div>
-  <div class="acts"><button id="check">CHECK</button><button id="fix" class="fixb">FIX CODE</button><button id="explain">EXPLAIN</button></div>
-  <form class="ask" id="askf"><input id="askin" autocomplete="off" placeholder="Ask Drake..."><button>SEND</button></form>
+  <div class="acts"><button id="explain">EXPLAIN</button><button id="debug">DEBUG</button><button id="optimize">OPTIMIZE</button><button id="fix" class="fixb">FIX</button></div>
+  <div class="navchips" id="navchips" aria-label="Go to"></div>
+  <form class="ask" id="askf"><input id="askin" autocomplete="off" placeholder="Ask, or say: go to output"><button>SEND</button></form>
 </section>
 
-<!-- Save dialog -->
-<div class="veil" id="saveDlg" hidden><div class="modal" role="dialog" aria-label="Save code">
-  <h3>SAVE CODE</h3>
+<div class="veil" id="saveDlg" hidden><div class="modal" role="dialog" aria-label="Save project">
+  <h3>SAVE PROJECT</h3>
   <form class="body" id="saveForm">
-    <input type="text" id="title" maxlength="80" placeholder="Name this snippet" autocomplete="off">
+    <input type="text" id="title" maxlength="80" placeholder="Name this project" autocomplete="off">
     <div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" class="btn" id="saveCancel">Cancel</button><button class="btn pri">Save</button></div>
   </form>
 </div></div>
-<!-- My codes -->
 <div class="veil" id="mineDlg" hidden><div class="modal" role="dialog" aria-label="My codes">
   <h3>MY CODES <button class="btn" id="mineClose" style="padding:4px 8px">&times;</button></h3>
   <div class="body" id="mineList"></div>
@@ -104,8 +130,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+<script src="vendor/diff_match_patch.js"></script>
 <script src="app.js"></script>
+<script src="examples.js"></script>
 <script src="drake.js"></script>
+<script src="viz.js"></script>
+<script src="github.js"></script>
+<script src="collab.js"></script>
 <script src="footer.js"></script>
 </body>
 </html>

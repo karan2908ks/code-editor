@@ -10,9 +10,13 @@ function draw(){
   px(2,2+b,12,10,ln);px(3,3+b,10,8,body);px(0,5+b,2,4,ac);px(14,5+b,2,4,ac);px(4,4+b,8,6,bg);
   if(m==='happy'){px(5,7+b,1,1,ok);px(6,6+b,1,1,ok);px(7,7+b,1,1,ok);px(9,7+b,1,1,ok);px(10,6+b,1,1,ok);px(11,7+b,1,1,ok);px(6,9+b,4,1,ok)}
   else if(m==='sad'){px(5,6+b,2,2,bad);px(9,6+b,2,2,bad);px(7,9+b,2,1,bad)}
+  else if(m==='wow'){px(5,5+b,2,3,ln);px(9,5+b,2,3,ln);px(7,9+b,2,2,ln);px(4,3+b,3,1,ac);px(9,3+b,3,1,ac)}
+  else if(m==='sleep'){px(5,7+b,2,1,ln);px(9,7+b,2,1,ln);px(7,9+b,2,1,ln);if(f%12<6){px(12,1,2,1,ac);px(13,2,1,1,ac);px(12,3,2,1,ac)}}
+  else if(m==='wink'){px(5,6+b,2,2,ln);px(9,7+b,2,1,ln);px(6,9+b,4,1,ok)}
   else if(m==='think'){const o=(f%6<3)?0:1;px(5+o,6+b,2,2,ac);px(9+o,6+b,2,2,ac);px(6,9+b,(f%4<2)?4:2,1,ln)}
   else{if(f%16===0){px(5,7+b,2,1,ln);px(9,7+b,2,1,ln)}else{px(5,6+b,2,2,ln);px(9,6+b,2,2,ln)}if(D.talk>0)px(7,9+b,2,1,ln)}
   px(4,12+b,8,1,ln);px(3,13,10,3,ln);px(4,14,8,2,c1);
+  if(D.shown!==m){D.shown=m;const l=document.getElementById('dmood');if(l)l.textContent=({idle:'IDLE',think:'THINKING',happy:'HAPPY',sad:'WORRIED',wow:'SURPRISED',wink:'WINK',sleep:'SLEEPING'}[m]||m).toUpperCase()}
 }
 setInterval(()=>{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){D.f++;if(D.talk>0)D.talk--}draw()},150);
 addEventListener('modechange',draw);
@@ -166,7 +170,7 @@ function togglePanel(open){panel.hidden=!open;if(open){tip.hidden=true;D.unread=
 $('#fab').onclick=()=>togglePanel(panel.hidden);$('#dclose').onclick=()=>togglePanel(false);
 const drake={
   draw,
-  setMood(m){D.mood=m;clearTimeout(D.rt);if(m==='happy'||m==='sad')D.rt=setTimeout(()=>drake.setMood('idle'),6000)},
+  setMood(m){D.mood=m;clearTimeout(D.rt);if(m==='happy'||m==='sad')D.rt=setTimeout(()=>drake.setMood('idle'),6000);else if(m==='wow')D.rt=setTimeout(()=>{if(D.mood==='wow')drake.setMood('idle')},1800)},
   say(h,alert){const d=document.createElement('div');d.className='msg';d.innerHTML=h;$('#log').appendChild(d);$('#log').scrollTop=1e9;D.talk=8;
     if(panel.hidden&&alert){D.unread++;badge.textContent=D.unread;badge.hidden=false;showTip(plain(h).slice(0,70)+'...');const f=$('#fab');f.classList.remove('ping');void f.offsetWidth;f.classList.add('ping')}},
   me(t){const d=document.createElement('div');d.className='msg me';d.textContent=t;$('#log').appendChild(d);$('#log').scrollTop=1e9},
@@ -192,21 +196,154 @@ function runFix(){
   cm.setValue(cur2);clearMarks();State.lastErr='';const rest=lint(lang,cur2);
   drake.setMood(rest.length?'think':'happy');
   drake.say(`<span class="ok">Fixed ${total} thing${total>1?'s':''}.</span>`+(rest.length?` ${rest.length} left that I cannot fix myself:\n`+rest.slice(0,5).map(x=>`\u2022 line ${x.line}: ${x.msg}`).join('\n'):' Press Run to try it.'))}
-$('#check').onclick=()=>runCheck();$('#fix').onclick=()=>runFix();
-$('#explain').onclick=()=>drake.say(State.lastErr?explain(State.lastErr):'Run your code first and I will explain any error.');
+/* ---------- rule-based explain / optimize (used when no AI key is set) ---------- */
+function codeCtx(){const sel=cm.getSelection(),f=activeFile();return{code:sel||cm.getValue(),sel:!!sel,lang:langOfName(f.name),name:f.name}}
+function ruleExplain(c){
+  const t=c.code,l=c.lang,lines=t.split('\n').length,P=[];
+  const fn=[];let m;const rx={python:/^\s*def\s+(\w+)\s*\(([^)]*)\)/gm,js:/function\s+(\w+)\s*\(([^)]*)\)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(?([^)=]*)\)?\s*=>/g,
+    java:/^\s*(?:public|private|protected|static|\s)*[\w<>\[\]]+\s+(\w+)\s*\(([^)]*)\)\s*\{/gm,c:/^\s*[\w\*]+\s+\**(\w+)\s*\(([^;{)]*)\)\s*\{/gm,cpp:/^\s*[\w:<>\*&]+\s+\**(\w+)\s*\(([^;{)]*)\)\s*\{/gm}[l];
+  if(rx)while((m=rx.exec(t))){const n=m[1]||m[3];if(n&&!/^(if|for|while|switch|catch)$/.test(n))fn.push(n+'('+String(m[2]!=null&&m[1]?m[2]:m[4]||'').trim()+')')}
+  const cls=[...t.matchAll(/\bclass\s+(\w+)/g)].map(x=>x[1]);
+  const cnt=r=>(t.match(r)||[]).length,loops=cnt(/\b(for|while)\b/g),ifs=cnt(/\bif\b/g),prints=cnt(/\b(print|printf|puts|cout|console\.log|System\.out\.print\w*)\b/g),inputs=cnt(/\b(input\(|scanf|cin\s*>>|Scanner|prompt\()/g);
+  if(l==='html'){const tags=[...new Set([...t.matchAll(/<([a-z][\w-]*)/gi)].map(x=>x[1].toLowerCase()))];
+    P.push(`This is an HTML page of ${lines} lines using ${tags.slice(0,8).map(x=>'<code>&lt;'+x+'&gt;</code>').join(', ')}.`);
+    if(/<script/i.test(t))P.push('It includes JavaScript, so the page can react to clicks and change itself.');if(/<style|stylesheet/i.test(t))P.push('It has CSS that controls how the page looks.');return P.join('\n')}
+  if(l==='css'){const rules=cnt(/\{/g);return `This stylesheet has ${rules} rule${rules===1?'':'s'}. Each rule picks elements (the selector) and sets how they look (the properties inside the braces).`}
+  P.push(`This ${LANGS[l]?LANGS[l].name:''} ${c.sel?'selection':'file'} has ${lines} lines.`);
+  if(cls.length)P.push('Classes: '+cls.map(x=>'<code>'+esc(x)+'</code>').join(', ')+'.');
+  if(fn.length)P.push('Functions: '+fn.slice(0,8).map(x=>'<code>'+esc(x)+'</code>').join(', ')+'.');
+  const bits=[];if(loops)bits.push(`${loops} loop${loops>1?'s':''}`);if(ifs)bits.push(`${ifs} condition${ifs>1?'s':''}`);if(prints)bits.push(`${prints} output statement${prints>1?'s':''}`);if(inputs)bits.push(`${inputs} input read${inputs>1?'s':''}`);
+  if(bits.length)P.push('It uses '+bits.join(', ')+'.');
+  const rec=fn.map(x=>x.split('(')[0]).filter(n=>new RegExp('\\b'+n+'\\s*\\(','g').test(t)&&(t.match(new RegExp('\\b'+n+'\\s*\\(','g'))||[]).length>2);
+  if(rec.length&&/def |function |int |void /.test(t))P.push('<code>'+esc(rec[0])+'</code> may call itself (recursion). Check that it has a stopping case.');
+  if(/\bimport\b|#include|require\(/.test(t))P.push('It imports libraries at the top.');
+  const base=c.sel?cm.getCursor('from').line:0,W=walkLines(t,l,base);if(W.length)P.push('<b>Walkthrough</b>\n'+W.join('\n'));
+  P.push('<span class="warn">Add an ANTHROPIC_API_KEY on Vercel for deeper AI explanations.</span>');return P.join('\n')}
+function lineNums(t){const s=new Set();let m;const a=/[\w.]+\.(?:c|cpp|java|py|js)[:](\d+)/g,b=/line (\d+)/gi;while((m=a.exec(t)))s.add(+m[1]);while((m=b.exec(t)))s.add(+m[1]);return[...s]}
+function walkLines(t,l,base){
+  const out=[],L=t.split('\n'),q=s=>'<code>'+esc(String(s).trim().slice(0,46))+'</code>';
+  const R=[
+   ['c cpp',/^\s*#\s*include\s*[<"]([^>"]+)/,m=>`brings in the ${q(m[1])} library`],
+   ['cpp',/^\s*using\s+namespace\s+(\w+)/,()=>'lets you write <code>cout</code> instead of <code>std::cout</code>'],
+   ['python',/^\s*(?:import|from)\s+(\S+)/,m=>`imports ${q(m[1])}`],
+   ['js',/^\s*(?:import\b|.*\brequire\()/,()=>'loads a library'],
+   ['python',/^\s*def\s+(\w+)\s*\(([^)]*)\)/,m=>`defines the function ${q(m[1])}${m[2].trim()?' that takes '+q(m[2]):''}`],
+   ['python java',/^\s*(?:public\s+)?class\s+(\w+)/,m=>`defines the class ${q(m[1])}`],
+   ['all',/^\s*(?:\}\s*)?(?:else\s+if|elif)\b\s*\(?(.*?)\)?\s*[:{]?\s*$/,m=>`otherwise checks ${q(m[1])}`],
+   ['all',/^\s*(?:\}\s*)?else\b/,()=>'otherwise runs this branch'],
+   ['all',/^\s*if\b\s*\(?(.+?)\)?\s*[:{]?\s*$/,m=>`runs the next block only if ${q(m[1])} is true`],
+   ['python',/^\s*for\s+(\w+)\s+in\s+(.+?):/,m=>`loops: ${q(m[1])} takes each value of ${q(m[2])} in turn`],
+   ['c cpp java js',/^\s*for\s*\((.*)\)/,m=>`loops using ${q(m[1])}`],
+   ['all',/^\s*while\b\s*\(?(.+?)\)?\s*[:{]?\s*$/,m=>`repeats while ${q(m[1])} is true`],
+   ['python',/^\s*yield\s+(.+)/,()=>'hands out one value at a time (a generator)'],
+   ['all',/^\s*return\b\s*(.*)$/,m=>{const v=m[1].replace(/;\s*$/,'').trim();return v?`gives back ${q(v)}`:'ends the function'}],
+   ['python',/^\s*(try|except|finally)\b/,m=>({try:'tries code that might fail',except:'handles the failure',finally:'always runs at the end'}[m[1]])],
+   ['all',/\b(?:print|printf|puts|cout|console\.log|System\.out\.print(?:ln)?)\b/,()=>'prints to the output'],
+   ['all',/\b(?:input\(|scanf|cin\s*>>|Scanner|prompt\()/,()=>'reads input from the user'],
+   ['js',/^\s*(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)/,m=>`defines the function ${q(m[1])}`],
+   ['js',/^\s*(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(?[^)=]*\)?\s*=>/,m=>`defines the arrow function ${q(m[1])}`],
+   ['js',/^\s*(?:const|let|var)\s+(\w+)\s*=\s*(.+?);?\s*$/,m=>`stores ${q(m[2])} in ${q(m[1])}`],
+   ['js',/document\.|getElementById|querySelector/,()=>'reads or changes the web page'],
+   ['js',/addEventListener|\.onclick/,()=>'reacts to a user event'],
+   ['c cpp java',/^\s*(?:public\s+|private\s+|static\s+|final\s+)*(?:int|long|float|double|char|bool|boolean|String|string|auto|vector<[^>]*>)\s+(\w+)\s*(?:=\s*(.+?))?;/,m=>m[2]?`creates ${q(m[1])} set to ${q(m[2])}`:`creates the variable ${q(m[1])}`],
+   ['c cpp java',/^\s*(?:public\s+|private\s+|static\s+|final\s+)*[\w<>\[\]:*&]+\s+(\w+)\s*\(([^;]*)\)\s*\{?\s*$/,m=>`defines ${q(m[1]+'('+m[2].trim()+')')}${m[1]==='main'?', where the program starts':''}`],
+   ['python',/^\s*([A-Za-z_][\w, ]*?)\s*=\s*(.+)$/,m=>`stores ${q(m[2])} in ${q(m[1])}`]
+  ];
+  for(let i=0;i<L.length&&out.length<14;i++){const s=L[i];if(!s.trim()||/^\s*(#(?!\s*include)|\/\/|\/\*|\*)/.test(s)||/^\s*[{}]\s*;?$/.test(s))continue;
+    for(const[lg,re,fn]of R){if(lg!=='all'&&lg.split(' ').indexOf(l)<0)continue;const m=re.exec(s);if(m){out.push(`\u2022 line ${base+i+1}: ${fn(m)}.`);break}}}
+  return out}
+function ruleOptimize(c){
+  const L=c.code.split('\n'),l=c.lang,S=[];const add=(i,m)=>S.push(`\u2022 line ${i+1}: ${m}`);
+  L.forEach((s,i)=>{
+    if(l==='python'){if(/for\s+\w+\s+in\s+range\(len\(/.test(s))add(i,'use <code>enumerate(items)</code> instead of <code>range(len(items))</code>.');if(/[=!]=\s*None/.test(s))add(i,'compare with <code>is None</code> / <code>is not None</code>.');
+      if(/==\s*True|==\s*False/.test(s))add(i,'write the condition directly, without comparing to True or False.');if(/^\s*\w+\s*\+=\s*['"f]/.test(s)&&L.slice(Math.max(0,i-3),i).some(x=>/\b(for|while)\b/.test(x)))add(i,'building a string with <code>+=</code> in a loop is slow. Collect parts in a list and use <code>"".join(parts)</code>.');
+      if(/\.append\(/.test(s)&&/^\s*for\b/.test(L[i-1]||''))add(i,'a loop that only appends can often be a list comprehension.');if(/\bopen\(/.test(s)&&!/\bwith\b/.test(s))add(i,'open files with <code>with open(...) as f:</code> so they always close.')}
+    if(l==='js'){if(/\bvar\s/.test(s))add(i,'use <code>let</code> or <code>const</code> instead of <code>var</code>.');if(/[^=!]==[^=]/.test(s.replace(/"[^"]*"|'[^']*'/g,'')))add(i,'prefer <code>===</code> over <code>==</code>.');
+      if(/for\s*\(.*\.length/.test(s))add(i,'consider <code>for...of</code>, <code>map</code> or <code>forEach</code>, or cache <code>.length</code>.');if(/\+=\s*['"`]/.test(s)&&L.slice(Math.max(0,i-3),i).some(x=>/\b(for|while)\b/.test(x)))add(i,'collect strings in an array and <code>join</code> them.')}
+    if(l==='cpp'){if(/\bendl\b/.test(s))add(i,'<code>endl</code> flushes every time. Use <code>"\\n"</code> in loops.');if(/\(\s*(std::)?(vector|string)\s*<?[^&)]*\s+\w+\s*[,)]/.test(s)&&!/&/.test(s)&&/\)\s*\{?\s*$/.test(s))add(i,'pass large objects by <code>const&amp;</code> to avoid copies.');
+      if(/\bfor\s*\(.*strlen\(/.test(s))add(i,'<code>strlen</code> runs every iteration. Compute it once before the loop.')}
+    if(l==='c'){if(/\bgets\s*\(/.test(s))add(i,'<code>gets</code> is unsafe. Use <code>fgets</code>.');if(/\bfor\s*\(.*strlen\(/.test(s))add(i,'<code>strlen</code> runs every iteration. Compute it once before the loop.')}
+    if(l==='java'){if(/\w+\s*\+=\s*"/.test(s)&&L.slice(Math.max(0,i-3),i).some(x=>/\b(for|while)\b/.test(x)))add(i,'use <code>StringBuilder</code> instead of <code>String +=</code> in loops.');if(/==\s*"|"\s*==/.test(s))add(i,'compare strings with <code>.equals()</code>, not <code>==</code>.');
+      if(/catch\s*\([^)]*\)\s*\{\s*\}/.test(s))add(i,'an empty <code>catch</code> hides errors. Log or handle the exception.');if(/new\s+(Integer|Double|Long)\s*\(/.test(s))add(i,'use <code>valueOf</code> or autoboxing.')}
+  });
+  if(l==='c'&&/\bmalloc\(/.test(c.code)&&!/\bfree\(/.test(c.code))S.push('\u2022 you call <code>malloc</code> but never <code>free</code>. That leaks memory.');
+  return S.length?`<span class="warn">${S.length} suggestion${S.length>1?'s':''}:</span>\n`+S.slice(0,10).join('\n'):'<span class="ok">No obvious improvements found.</span> The code looks tidy.';
+}
+/* ---------- AI (optional) ---------- */
+let aiOK=null;
+function setAiBadge(){const b=$('#aiMode');b.textContent=aiOK?'AI':'RULES';b.classList.toggle('on',!!aiOK);b.title=aiOK?'Answers come from Claude':'Built-in rules. Set ANTHROPIC_API_KEY on Vercel for AI answers.'}
+function mdHtml(t){return esc(t).replace(/```[\w]*\n?([\s\S]*?)```/g,(m,c)=>'<pre>'+c.trim()+'</pre>').replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>')}
+async function askAI(mode,question){
+  const c=codeCtx();drake.setMood('think');
+  try{const r=await fetch('/api/drake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,lang:c.lang,code:c.code,error:State.lastErr||'',question:question||''})});
+    if(r.status===503||r.status===404){aiOK=false;setAiBadge();return null}
+    const j=await r.json().catch(()=>({}));if(!r.ok){drake.setMood('sad');drake.say('<span class="bad">'+esc(j.error||'AI error')+'</span>');return undefined}
+    aiOK=true;setAiBadge();drake.setMood('happy');return j.text}catch(e){return null}}
+$('#explain').onclick=async()=>{const c=codeCtx();drake.say(`Explaining ${c.sel?'your selection':esc(c.name)}...`);const t=await askAI('explain');if(t)drake.say(mdHtml(t));else if(t===null){drake.setMood('idle');drake.say(ruleExplain(c))}};
+$('#debug').onclick=async()=>{
+  const c=codeCtx();drake.say(`Debugging ${c.sel?'your selection':esc(c.name)}...`);
+  if(aiOK!==false&&(State.lastErr||PROBS.lint.length||PROBS.run.length)){const t=await askAI('debug');if(t){drake.say(mdHtml(t));return}if(t===undefined)return}
+  const is=runCheck(true);if(State.lastErr){const ls=lineNums(State.lastErr).slice(0,3),src=cm.getValue().split('\n');
+    drake.say('<span class="bad">Last run failed.</span>\n'+explain(State.lastErr)+(ls.length?'\n\n<b>Where:</b>\n'+ls.map(n=>`\u2022 line ${n}: <code>${esc((src[n-1]||'').trim().slice(0,60))}</code>`).join('\n'):'')+'\n\n<b>Next:</b> fix the marked line, or press <b>FIX</b> and I will try. Then run again.');drake.setMood('think')}else if(!is.length)drake.say('Nothing is wrong that I can see. Run the code, and if it fails I will read the error.')};
+$('#optimize').onclick=async()=>{const c=codeCtx();drake.say(`Looking for improvements in ${c.sel?'your selection':esc(c.name)}...`);const t=await askAI('optimize');if(t)drake.say(mdHtml(t));else if(t===null){drake.setMood('happy');drake.say(ruleOptimize(c))}};
+$('#fix').onclick=()=>runFix();
+/* ---------- navigation and chat ---------- */
+const PF='https://karanportfolio-ashen.vercel.app/';
+const SECTIONS={about:'About',skills:'Skills',work:'Work',projects:'Work',player:'Player',arcade:'Arcade',contact:'Contact'};
+function openSection(key){const name=SECTIONS[key],url=PF+'#'+name.toLowerCase();drake.setMood('wink');
+  try{window.open(url,'_blank','noopener')}catch(e){}
+  return`Taking you to <a href="${url}" target="_blank" rel="noopener">${name} on Karan's portfolio</a>. If a new tab did not open, tap the link.`}
+function navigate(t){
+  if(!/\b(go to|goto|open|show|take me|navigate|scroll|switch to|jump to)\b/.test(t)&&!/^(output|terminal|problems|footer|editor|game|examples|github|visualizer|about|skills|work|projects|player|arcade|contact)$/.test(t))return null;
+  const tab=k=>{showTab(k);$('#outBox').scrollIntoView({behavior:'smooth',block:'nearest'})};
+  const sec=/\b(about|skills|work|projects|player|arcade|contact)\b/.exec(t);if(sec&&!/output|terminal|problem|editor|footer|game|example|github|visuali|live|theme|file/.test(t))return openSection(sec[1]);
+  if(/problem|error list/.test(t)){tab('prob');return'Showing <b>Problems</b>.'}
+  if(/terminal|stdin/.test(t)){tab('term');return'Opened the <b>Terminal</b> tab. Type program input at the bottom.'}
+  if(/preview/.test(t)){if($('#t-prev').hidden)return'There is no HTML file open, so there is no preview yet.';tab('prev');return'Showing the <b>Preview</b>.'}
+  if(/output|console/.test(t)){tab('out');return'Showing <b>Output</b>.'}
+  if(/example/.test(t)){openExamples(null,$('#exBtn'));return'Here are some examples.'}
+  if(/github|git hub/.test(t)){$('#gh').click();return'Opening GitHub tools.'}
+  if(/visuali[sz]/.test(t)){$('#viz').click();return'Opening the algorithm visualizer.'}
+  if(/live|collab|room|multiplayer/.test(t)){$('#live').click();return'Opening live coding.'}
+  if(/my codes|projects|saved/.test(t)){$('#mine').click();return'Here are your saved projects.'}
+  if(/save/.test(t)){openSave();return'Opening save.'}
+  if(/theme|colou?r/.test(t)){$('#theme').click();return'Pick a theme.'}
+  if(/full ?screen/.test(t)){setFs(true);return'Full screen. Press Esc to leave.'}
+  if(/footer|game|play|bottom|coin|mobs?/.test(t)){$('#footer').scrollIntoView({behavior:'smooth'});return'Scrolling to the game. Click the scene, then use A/D and W.'}
+  if(/portfolio/.test(t)){const a=document.querySelector('.flinks a[href*=karanportfolio]');if(a)a.click();return'Opening Karan\'s portfolio.'}
+  if(/editor|code/.test(t)){cm.focus();$('#edBox').scrollIntoView({behavior:'smooth',block:'center'});return'Back to the editor.'}
+  if(/top|home/.test(t)){scrollTo({top:0,behavior:'smooth'});return'Back to the top.'}
+  return null;
+}
 function answer(q){
   const t=q.toLowerCase().trim();
-  if(/^(hi|hello|hey|yo)\b|who are you|your name/.test(t))return `I am <b>Drake</b>, the AI bot inside Karan's Code Editor. I read your ${LANGS[lang].name} code, spot errors, explain them and fix them.`;
-  if(/explain|why|error|wrong|bug/.test(t))return State.lastErr?explain(State.lastErr):'Run your code first, or press CHECK, and I will explain what I find.';
-  if(/fix|correct|repair/.test(t)){setTimeout(runFix,50);return 'On it.'}
-  if(/check|review|scan/.test(t)){setTimeout(()=>runCheck(),50);return 'Reading your code...'}
-  if(/focus|coding mode|distract|quiet|stop animation/.test(t)){setFocus(true);return 'Focus mode is on. All animation is paused.'}
-  if(/theme|mode|neon|dark|light|cyber|punk/.test(t)){const m=/zen|black/.test(t)?'zen':/neon/.test(t)?'neon':/cyber|punk/.test(t)?'cyberpunk':/light/.test(t)?'light':'dark';setMode(m);return `Switched to ${m} mode.`}
-  if(/save/.test(t)){setTimeout(openSave,50);return 'Opening save.'}
-  for(const k in KB)if(t.includes(k)||(k==='print'&&/output|show|hello world/.test(t))||(k==='loop'&&/iterate|repeat/.test(t))||(k==='input'&&/read|scanf|cin/.test(t)))return `Here is ${k} in ${LANGS[lang].name}:\n<code>${esc(KB[k][lang])}</code>`;
-  return 'I can check code, explain errors, fix mistakes, or show a snippet. Try "how to loop", "explain error" or "fix".'}
-$('#askf').onsubmit=e=>{e.preventDefault();const v=$('#askin').value.trim();if(!v)return;$('#askin').value='';drake.me(v);setTimeout(()=>drake.say(answer(v)),250)};
+  if(/^(hi|hello|hey|yo)\b|who are you|your name/.test(t))return `I am <b>Drake</b>, the AI bot inside Karan's Code Editor. I can <b>explain</b>, <b>debug</b>, <b>optimize</b> and <b>fix</b> your code, and take you to any part of the page.`;
+  const nav=navigate(t);if(nav)return nav;
+  if(/^explain\b/.test(t)&&!/error/.test(t)){setTimeout(()=>$('#explain').click(),50);return'On it.'}
+  if(/debug/.test(t)){setTimeout(()=>$('#debug').click(),50);return'Debugging...'}
+  if(/optimi[sz]e|faster|improve/.test(t)){setTimeout(()=>$('#optimize').click(),50);return'Looking for improvements...'}
+  if(/explain|why|error|wrong|bug/.test(t))return State.lastErr?explain(State.lastErr):'Run your code first, or press DEBUG, and I will explain what I find.';
+  if(/fix|correct|repair/.test(t)){setTimeout(runFix,50);return'On it.'}
+  if(/check|review|scan/.test(t)){setTimeout(()=>runCheck(),50);return'Reading your code...'}
+  if(/focus|coding mode|distract|quiet|stop animation/.test(t)){setFocus(true);return'Focus mode is on. All animation is paused.'}
+  if(/theme|mode|neon|dark|light|cyber|punk|dracula|zen|black/.test(t)){const m=/zen|black/.test(t)?'zen':/neon/.test(t)?'neon':/cyber|punk/.test(t)?'cyberpunk':/dracula/.test(t)?'dracula':/light/.test(t)?'light':'dark';setMode(m);return`Switched to ${m} mode.`}
+  for(const k in KB)if(t.includes(k)||(k==='print'&&/output|show|hello world/.test(t))||(k==='loop'&&/iterate|repeat/.test(t))||(k==='input'&&/read|scanf|cin/.test(t)))return`Here is ${k} in ${LANGS[lang]?LANGS[lang].name:''}:\n<code>${esc(KB[k][lang]||KB[k].python)}</code>`;
+  return null}
+$('#askf').onsubmit=async e=>{e.preventDefault();const v=$('#askin').value.trim();if(!v)return;$('#askin').value='';drake.me(v);
+  const a=answer(v);if(a){setTimeout(()=>drake.say(a),250);return}
+  if(aiOK!==false){const t=await askAI('chat',v);if(t){drake.say(mdHtml(t));return}}
+  drake.say('I can explain, debug, optimize or fix your code, show a snippet ("how to loop"), or take you somewhere ("go to output").')};
+/* ---------- moods: wink on click, sleep when idle ---------- */
+let lastAct=Date.now();
+const wake=()=>{lastAct=Date.now();if(D.mood==='sleep')drake.setMood('idle')};
+addEventListener('pointerdown',wake,true);addEventListener('keydown',wake,true);
+$('#fab').addEventListener('click',()=>{if(panel.hidden===false){drake.setMood('wink');setTimeout(()=>{if(D.mood==='wink')drake.setMood('idle')},1100)}});
+setInterval(()=>{if(Date.now()-lastAct>45000&&D.mood==='idle')D.mood='sleep'},5000);
+/* quick navigation chips */
+(function(){const bar=document.getElementById('navchips');if(!bar)return;
+  [['Output','go to output'],['Terminal','go to terminal'],['Game','go to footer'],['About','open about'],['Skills','open skills'],['Work','open work'],['Player','open player'],['Arcade','open arcade'],['Contact','open contact']].forEach(([l,q])=>{
+    const b=document.createElement('button');b.type='button';b.textContent=l;b.onclick=()=>{drake.me(q);const a=answer(q);if(a)setTimeout(()=>drake.say(a),200)};bar.appendChild(b)})})();
 window.drake=drake;
-setLang(lang,true);draw();
-drake.say('Hi, I am <b>Drake</b>. I spot errors in your code and fix them. Try breaking the sample, then press <b>CHECK</b>.');
-setTimeout(()=>{if(panel.hidden)showTip('Hi, I am Drake. Click me to check or fix your code.',6000)},1200);
+setAiBadge();draw();
+drake.say('Hi, I am <b>Drake</b>. Select some code and press <b>EXPLAIN</b>, <b>DEBUG</b> or <b>OPTIMIZE</b>. You can also type "go to output" or "open github".');
+setTimeout(()=>{if(panel.hidden)showTip('Hi, I am Drake. Click me to explain, debug or fix your code.',6000)},1200);

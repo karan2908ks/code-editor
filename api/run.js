@@ -35,7 +35,13 @@ module.exports = async (req, res) => {
     const r = await fetch('https://wandbox.org/api/compile.json', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ compiler, code, stdin: String(b.stdin ?? '').slice(0, 10000), save: false }),
+      body: JSON.stringify({
+        compiler,
+        code,
+        codes: (Array.isArray(b.files) ? b.files : []).slice(0, 19).filter((f) => f && /^[\w][\w .\-]{0,59}$/.test(f.name)).map((f) => ({ file: f.name, code: String(f.code ?? '').slice(0, 100000) })),
+        stdin: String(b.stdin ?? '').slice(0, 10000),
+        save: false,
+      }),
       signal: ctl.signal,
     }).finally(() => clearTimeout(timer));
     if (!r.ok) return res.status(502).json({ error: 'Compiler service error (' + r.status + ')' });
